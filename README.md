@@ -1,10 +1,4 @@
-NujdCup – Innovative Esports Platform
 
-Team Members:
-	•	Almas Alobaid
-	•	Nada Albehlal
-	•	Aryam Yahya
-	•	Joud Aljuthaili
 
 Project Overview
 
