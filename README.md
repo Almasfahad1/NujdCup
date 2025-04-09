@@ -1,4 +1,3 @@
-
 # eSports Platform - Road to 2034
 
 ## Team Members
@@ -22,12 +21,15 @@ This initiative is part of the preparations for the 2034 World Cup, aiming to el
 - **Challenges and Unique Rewards**
 - **Community-Driven Competitive Experience**
 
+## Development Timeline
+
+![Development Timeline](https://i.postimg.cc/0QFftVdT/a91f8e39-43f3-465a-b4e2-b42175360e2c.jpg)
+
 ## Our Vision
 To empower gamers, promote eSports excellence, and contribute to a competitive and inclusive digital future leading up to the 2034 World Cup.
 
-https://i.postimg.cc/0QFftVdT/a91f8e39-43f3-465a-b4e2-b42175360e2c.jpg
 ---
 
 Feel free to contribute, suggest enhancements, or connect with us to grow this platform together!
 
-https://nujd-cup-looalffahd11.replit.app
+[Visit Our Platform](https://nujd-cup-looalffahd11.replit.app)
