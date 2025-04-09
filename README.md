@@ -1,14 +1,32 @@
+```
+# eSports Platform - Road to 2034
 
+## Team Members
+- Almas AlObaid
+- Nada AlBahlal
+- Aryam Yahya
+- Jood AlJutaili
 
-Project Overview
+## Project Overview
+Our project is an innovative eSports platform designed to unite gamers through competitive tournaments and a unique digital experience. The platform offers a fully integrated registration and ranking system, supported by AI-driven performance analysis and a smart points system that evaluates player skills.
 
-NujdCup is an innovative platform designed to revolutionize the esports scene by bringing players together in competitive tournaments with a unique and engaging experience. The platform features a complete registration and ranking system, supported by artificial intelligence to analyze player performance and a smart points system to assess skills.
+By encouraging continuous interaction, growth, and development, users are rewarded through exciting challenges and exclusive prizes. 
 
-Through personalized challenges and exclusive rewards, NujdCup encourages continuous participation and skill development. As part of the preparations for the 2034 Cup, this platform aims to elevate the level of esports and foster a competitive spirit on a wider scale.
+This initiative is part of the preparations for the 2034 World Cup, aiming to elevate the eSports scene and promote a broader culture of competitive gaming.
 
-Key Features
-	•	Competitive tournament hosting
-	•	AI-powered performance analysis
-	•	Smart skill-based ranking system
-	•	Interactive challenges and valuable rewards
-	•	Bilingual support with a user-friendly interface
+## Key Features
+- **AI-Based Performance Analytics**
+- **Skill-Based Smart Points System**
+- **Seamless Tournament Registration**
+- **Real-Time Rankings and Leaderboards**
+- **Challenges and Unique Rewards**
+- **Community-Driven Competitive Experience**
+
+## Our Vision
+To empower gamers, promote eSports excellence, and contribute to a competitive and inclusive digital future leading up to the 2034 World Cup.
+
+---
+
+Feel free to contribute, suggest enhancements, or connect with us to grow this platform together!
+
+```
