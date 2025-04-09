@@ -1,0 +1,1156 @@
+## هيكل المشروع
+nujdcup/
+├── client/
+│   ├── public/
+│   │   ├── images/
+│   │   │   └── teams/
+│   │   └── index.html
+│   └── src/
+│       ├── components/
+│       │   ├── ui/
+│       │   ├── home/
+│       │   └── dashboard/
+│       ├── hooks/
+│       ├── lib/
+│       ├── pages/
+│       ├── App.tsx
+│       └── main.tsx
+├── server/
+│   ├── auth.ts
+│   ├── index.ts
+│   ├── routes.ts
+│   ├── storage.ts
+│   └── vite.ts
+├── shared/
+│   └── schema.ts
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
+
+## محتويات الملفات الرئيسية
+
+### 1. package.json
+{
+  "name": "nujdcup",
+  "version": "1.0.0",
+  "description": "Saudi Cup 2034 - Football Tournament Platform",
+  "main": "server/index.ts",
+  "scripts": {
+    "dev": "tsx server/index.ts",
+    "build": "tsc -p .",
+    "start": "node dist/server/index.js"
+  },
+  "dependencies": {
+    "@fontsource/poppins": "^5.0.8",
+    "@fontsource/tajawal": "^5.0.8",
+    "@hookform/resolvers": "^3.3.1",
+    "@neondatabase/serverless": "^0.6.0",
+    "@radix-ui/react-accordion": "^1.1.2",
+    "@radix-ui/react-alert-dialog": "^1.0.5",
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-dropdown-menu": "^2.0.5",
+    "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-popover": "^1.0.7",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-tabs": "^1.0.4",
+    "@radix-ui/react-toast": "^1.1.4",
+    "@tanstack/react-query": "^5.0.5",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "connect-pg-simple": "^9.0.0",
+    "date-fns": "^2.30.0",
+    "drizzle-kit": "^0.20.6",
+    "drizzle-orm": "^0.29.0",
+    "drizzle-zod": "^0.5.1",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "i18next": "^23.5.1",
+    "lucide-react": "^0.284.0",
+    "memorystore": "^1.6.7",
+    "passport": "^0.6.0",
+    "passport-local": "^1.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.47.0",
+    "react-i18next": "^13.2.2",
+    "react-icons": "^4.12.0",
+    "tailwind-merge": "^1.14.0",
+    "tailwindcss-animate": "^1.0.7",
+    "ws": "^8.14.2",
+    "wouter": "^2.11.0",
+    "zod": "^3.22.2",
+    "zod-validation-error": "^1.5.0"
+  },
+  "devDependencies": {
+    "@types/connect-pg-simple": "^7.0.0",
+    "@types/express": "^4.17.17",
+    "@types/express-session": "^1.17.7",
+    "@types/node": "^20.7.1",
+    "@types/passport": "^1.0.12",
+    "@types/passport-local": "^1.0.35",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@types/ws": "^8.5.8",
+    "@vitejs/plugin-react": "^4.0.4",
+    "autoprefixer": "^10.4.15",
+    "postcss": "^8.4.30",
+    "tailwindcss": "^3.3.3",
+    "tsx": "^3.12.10",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9"
+  }
+}
+
+### 2. shared/schema.ts
+import { pgTable, text, serial, integer, boolean, timestamp, real } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  fullName: text("full_name").notNull(),
+  language: text("language").notNull().default("ar"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const teams = pgTable("teams", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  nameEn: text("name_en").notNull(),
+  logoUrl: text("logo_url"),
+  sport: text("sport").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const tournaments = pgTable("tournaments", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  nameEn: text("name_en").notNull(),
+  description: text("description"),
+  descriptionEn: text("description_en"),
+  sport: text("sport").notNull(),
+  status: text("status").notNull().default("upcoming"), // upcoming, ongoing, completed
+  imageUrl: text("image_url"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+export const tournamentTeams = pgTable("tournament_teams", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").notNull(),
+  teamId: integer("team_id").notNull(),
+  matchesPlayed: integer("matches_played").notNull().default(0),
+  wins: integer("wins").notNull().default(0),
+  draws: integer("draws").notNull().default(0),
+  losses: integer("losses").notNull().default(0),
+  goalsFor: integer("goals_for").notNull().default(0),
+  goalsAgainst: integer("goals_against").notNull().default(0),
+  points: integer("points").notNull().default(0),
+});
+
+export const matches = pgTable("matches", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id").notNull(),
+  homeTeamId: integer("home_team_id").notNull(),
+  awayTeamId: integer("away_team_id").notNull(),
+  homeScore: integer("home_score"),
+  awayScore: integer("away_score"),
+  venue: text("venue"),
+  venueEn: text("venue_en"),
+  matchDate: timestamp("match_date"),
+  status: text("status").notNull().default("upcoming"), // upcoming, live, completed
+  round: text("round"), // quarterfinal, semifinal, final
+  isOpen: boolean("is_open").default(true), // 
+
+  predictionMultiplier: real("prediction_multiplier").default(1.0),
+});
+
+export const predictions = pgTable("predictions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  matchId: integer("match_id").notNull(),
+  predictedHomeScore: integer("predicted_home_score").notNull(),
+  predictedAwayScore: integer("predicted_away_score").notNull(),
+  points: integer("points").default(0), // النقاط المكتسبة من التوقع
+  isCorrect: boolean("is_correct").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const userPoints = pgTable("user_points", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  totalPoints: integer("total_points").notNull().default(0),
+  correctPredictions: integer("correct_predictions").notNull().default(0),
+  totalPredictions: integer("total_predictions").notNull().default(0),
+});
+
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  email: true,
+  password: true,
+  fullName: true,
+  language: true,
+});
+
+export const insertTeamSchema = createInsertSchema(teams);
+export const insertTournamentSchema = createInsertSchema(tournaments);
+export const insertTournamentTeamSchema = createInsertSchema(tournamentTeams);
+export const insertMatchSchema = createInsertSchema(matches);
+export const insertPredictionSchema = createInsertSchema(predictions).pick({
+  userId: true,
+  matchId: true,
+  predictedHomeScore: true,
+  predictedAwayScore: true,
+});
+export const insertUserPointsSchema = createInsertSchema(userPoints).pick({
+  userId: true,
+  totalPoints: true,
+  correctPredictions: true,
+  totalPredictions: true,
+});
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertPrediction = z.infer<typeof insertPredictionSchema>;
+export type InsertUserPoints = z.infer<typeof insertUserPointsSchema>;
+export type User = typeof users.$inferSelect;
+export type Team = typeof teams.$inferSelect;
+export type Tournament = typeof tournaments.$inferSelect;
+export type TournamentTeam = typeof tournamentTeams.$inferSelect;
+export type Match = typeof matches.$inferSelect;
+export type Prediction = typeof predictions.$inferSelect;
+export type UserPoints = typeof userPoints.$inferSelect;
+
+### 3. server/auth.ts
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import { Express } from "express";
+import session from "express-session";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+import { storage } from "./storage";
+import { User as SelectUser } from "@shared/schema";
+
+declare global {
+  namespace Express {
+    interface User extends SelectUser {}
+  }
+}
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+async function comparePasswords(supplied: string, stored: string) {
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
+}
+
+export function setupAuth(app: Express) {
+  const sessionSecret = process.env.SESSION_SECRET || "nujdcup-secret-key";
+  
+  const sessionSettings: session.SessionOptions = {
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    store: storage.sessionStore,
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    }
+  };
+
+  app.set("trust proxy", 1);
+  app.use(session(sessionSettings));
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  passport.use(
+    new LocalStrategy(async (username, password, done) => {
+      try {
+        const user = await storage.getUserByUsername(username);
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false);
+        } else {
+          return done(null, user);
+        }
+      } catch (error) {
+        return done(error);
+      }
+    }),
+  );
+
+  passport.serializeUser((user, done) => done(null, user.id));
+  passport.deserializeUser(async (id: number, done) => {
+    try {
+      const user = await storage.getUser(id);
+      done(null, user);
+    } catch (error) {
+      done(error);
+    }
+  });
+
+  app.post("/api/register", async (req, res, next) => {
+    try {
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).send("Username already exists");
+      }
+
+      const existingEmail = await storage.getUserByEmail(req.body.email);
+      if (existingEmail) {
+        return res.status(400).send("Email already exists");
+      }
+
+      const user = await storage.createUser({
+        ...req.body,
+        password: await hashPassword(req.body.password),
+      });
+
+      req.login(user, (err) => {
+        if (err) return next(err);
+        res.status(201).json(user);
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    res.status(200).json(req.user);
+  });
+
+  app.post("/api/logout", (req, res, next) => {
+    req.logout((err) => {
+      if (err) return next(err);
+      res.sendStatus(200);
+    });
+  });
+
+  app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    res.json(req.user);
+  });
+
+  app.get("/api/tournament-teams", (req, res) => {
+    const sport = req.query.sport as string || "football";
+    storage.getTournamentTeamsBySport(sport)
+      .then(teams => res.json(teams))
+      .catch(err => res.status(500).json({ error: err.message }));
+  });
+
+  app.get("/api/tournament-bracket", (req, res) => {
+    storage.getTournamentBracket()
+      .then(matches => res.json(matches))
+      .catch(err => res.status(500).json({ error: err.message }));
+  });
+
+  app.get("/api/upcoming-matches", (req, res) => {
+    storage.getUpcomingMatches()
+      .then(matches => res.json(matches))
+      .catch(err => res.status(500).json({ error: err.message }));
+  });
+}
+
+### 4. server/routes.ts
+import type { Express, Request, Response } from "express";
+import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
+import { setupAuth } from "./auth";
+import { storage } from "./storage";
+import { insertPredictionSchema } from "@shared/schema";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  setupAuth(app);
+  
+  get("/api/tournaments", async (req, res) => {
+    try {
+      const tournaments = await storage.getTournaments();
+      res.json(tournaments);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tournaments" });
+    }
+  });
+
+  app.get("/api/tournaments/:id", async (req, res) => {
+    try {
+      const tournament = await storage.getTournamentById(parseInt(req.params.id));
+      if (!tournament) {
+        return res.status(404).json({ error: "Tournament not found" });
+      }
+      res.json(tournament);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch tournament" });
+    }
+  });
+
+  app.get("/api/teams", async (req, res) => {
+    try {
+      const teams = await storage.getTeams();
+      res.json(teams);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch teams" });
+    }
+  });
+
+  app.get("/api/matches/live", async (req, res) => {
+    try {
+      const matches = await storage.getLiveMatches();
+      res.json(matches);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch live matches" });
+    }
+  });
+
+  app.get("/api/matches/upcoming", async (req, res) => {
+    try {
+      const matches = await storage.getUpcomingMatches();
+      res.json(matches);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch upcoming matches" });
+    }
+  });
+
+  app.get("/api/matches/:id", async (req, res) => {
+    try {
+      const match = await storage.getMatchById(parseInt(req.params.id));
+      if (!match) {
+        return res.status(404).json({ error: "Match not found" });
+      }
+      res.json(match);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch match" });
+    }
+  });
+
+  app.post("/api/predictions", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "You must be logged in to make predictions" });
+    }
+
+    try {
+      const parseResult = insertPredictionSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "Invalid prediction data", details: parseResult.error });
+      }
+
+      const match = await storage.getMatchById(parseResult.data.matchId);
+      if (!match) {
+        return res.status(404).json({ error: "Match not found" });
+      }
+
+      if (!match.isOpen) {
+        return res.status(400).json({ error: "This match is closed for predictions" });
+      }
+      
+      if (match.status !== "upcoming") {
+        return res.status(400).json({ error: "Cannot predict on matches that have already started or finished" });
+      }
+
+      const existingPrediction = await storage.getPrediction(req.user!.id, parseResult.data.matchId);
+      if (existingPrediction) {
+        return res.status(400).json({ error: "You have already made a prediction for this match" });
+      }
+
+      const prediction = await storage.createPrediction({
+        ...parseResult.data,
+        userId: req.user!.id
+      });
+
+      res.status(201).json(prediction);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create prediction" });
+    }
+  });
+
+  app.get("/api/predictions/user", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "You must be logged in to view your predictions" });
+    }
+
+    try {
+      const predictions = await storage.getUserPredictions(req.user!.id);
+      res.json(predictions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user predictions" });
+    }
+  });
+
+  app.get("/api/predictions/match/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).
+      
+      json({ error: "You must be logged in to view match predictions" });
+    }
+
+    try {
+      const matchId = parseInt(req.params.id);
+      const match = await storage.getMatchById(matchId);
+      if (!match) {
+        return res.status(404).json({ error: "Match not found" });
+      }
+
+      if (match.status !== "completed") {
+        return res.status(400).json({ error: "Predictions are only visible after the match is completed" });
+      }
+
+      const predictions = await storage.getPredictionsByMatch(matchId);
+      res.json(predictions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch match predictions" });
+    }
+  });
+
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      const leaderboard = await storage.getLeaderboard(limit);
+      res.json(leaderboard);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch leaderboard" });
+    }
+  });
+
+  app.get("/api/user/points", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "You must be logged in to view your points" });
+    }
+
+    try {
+      const userPoints = await storage.getUserPoints(req.user!.id);
+      res.json(userPoints || { userId: req.user!.id, totalPoints: 0, correctPredictions: 0, totalPredictions: 0 });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user points" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  
+
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  const clients = new Set<WebSocket>();
+  
+  const broadcastLiveMatchUpdate = (matchData: any) => {
+    const message = JSON.stringify({
+      type: 'match_update',
+      data: matchData
+    });
+    
+    clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  };
+  
+  wss.on('connection', (ws) => {
+    console.log('WebSocket client connected');
+    
+    clients.add(ws);
+    
+    storage.getLiveMatches().then(matches => {
+    
+  storage.getLiveMatches().then(matches => {
+
+      const liveMatches = matches.map(match => ({
+        matchId: match.id,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        homeScore: match.homeScore || 0,
+        awayScore: match.awayScore || 0,
+        minute: 30, 
+        status: match.status === 'live' ? 'first_half' : 'not_started',
+        updates: []  
+      }));
+      
+      ws.send(JSON.stringify({ 
+        type: 'match_list', 
+        data: { matches: liveMatches }
+      }));
+    }).catch(error => {
+      console.error('Error fetching live matches:', error);
+    });
+    
+    ws.on('message', (message) => {
+      try {
+
+        const data = JSON.parse(message.toString());
+        console.log('Received message:', data);
+        
+
+        switch (data.type) {
+          case 'subscribe_match':
+            console.log(`Client subscribed to match ID: ${data.matchId}`);
+            break;
+            
+          case 'ping':
+            ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+            break;
+            
+          default:
+            console.log('Unknown message type:', data.type);
+        }
+      } catch (error) {
+        console.error('Error processing message:', error);
+        
+        }
+    });
+    
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+      clients.delete(ws);
+    });
+  });
+  
+
+  app.post('/api/admin/match/update', async (req, res) => {
+
+    if (!req.isAuthenticated() || req.user!.username !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    
+    try {
+      const { matchId, updateType, data } = req.body;
+      
+      if (!matchId || !updateType) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      console.log(`Broadcasting match update for match ID: ${matchId}`);
+      
+      let matchUpdate: any = { matchId };
+      
+      switch (updateType) {
+        case 'score':
+
+          const match = await storage.updateMatchScore(matchId, data.homeScore, data.awayScore, 'live');
+          if (!match) {
+            return res.status(404).json({ error: 'Match not found' });
+          }
+          
+          const homeTeam = await storage.getTeamById(match.homeTeamId);
+          const awayTeam = await storage.getTeamById(match.awayTeamId);
+          
+          matchUpdate = {
+            ...matchUpdate,
+            homeScore: data.homeScore,
+            awayScore: data.awayScore,
+            minute: data.minute || 1,
+            update: {
+              type: 'goal',
+              team: data.team,
+              player: data.player,
+              minute: data.minute || 1,
+              homeScore: data.homeScore,
+              awayScore: data.awayScore,
+              description: `${data.player} سجل هدفاً لفريق ${data.team === 'home' ? homeTeam?.name : awayTeam?.name}!`
+            }
+          };
+          break;
+          
+        case 'event':
+
+          matchUpdate = {
+            ...matchUpdate,
+            minute: data.minute || 1,
+            update: {
+              type: data.eventType,
+              team: data.team,
+              player: data.player,
+              minute: data.minute || 1,
+              description: data.description
+            }
+          };
+          break;
+          
+        case 'status':
+
+          matchUpdate = {
+            ...matchUpdate,
+            status: data.status,
+            minute: data.minute || 0,
+            update: {
+              type: data.status === 'half_time' ? 'halfTime' : 
+                     data.status === 'full_time' ? 'fullTime' : 'kick-off',
+              team: 'none',
+              minute: data.minute || 0,
+              description: `المباراة ${data.status === 'half_time' ? 'في استراحة الشوط الأول' : 
+                             data.status === 'full_time' ? 'انتهت' : 'بدأت'}`
+            }
+          };
+          break;
+          
+        default:
+          return res.status(400).json({ error: 'Invalid update type' });
+      }
+      
+      broadcastLiveMatchUpdate(matchUpdate);
+      
+      res.status(200).json({ message: 'Update broadcasted successfully' });
+    } catch (error) {
+      console.error('Error broadcasting match update:', error);
+      res.status(500).json({ error: 'Failed to broadcast match update' });
+    }
+  });
+  
+  return httpServer;
+}
+
+### 5. server/index.ts
+import express from "express";
+import { json } from "express";
+import type { NextFunction, Request, Response } from "express";
+import path from "path";
+import { registerRoutes } from "./routes";
+import { serveStatic, setupVite, log } from "./vite";
+
+async function createServer() {
+  const app = express();
+  app.use(json());
+
+  const httpServer = await registerRoutes(app);
+
+  if (process.env.NODE_ENV === "production") {
+  serveStatic(app);
+  } else {
+    await setupVite(app, httpServer);
+  }
+
+
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    log(`Error: ${err.message || err}`, "error");
+    const statusCode = err.statusCode || 500;
+    if (err && err.message) {
+      res.status(statusCode).json({
+        error: err.message,
+      });
+    } else {
+      res.status(statusCode).json({
+        error: "Internal Server Error",
+      });
+    }
+  });
+
+
+  const port = process.env.PORT || 5000;
+
+
+  httpServer.listen(port, () => {
+    log(`serving on port ${port}`);
+  });
+
+  return { app, httpServer };
+}
+
+createServer();
+
+### 6. client/src/lib/team-logos.ts
+export function getTeamLogo(teamName: string): string {
+  const teamNameLower = teamName.toLowerCase().replace(/\s+/g, '');
+  
+  const teamLogoMap: Record<string, string> = {
+    'alnassr': '/images/teams/nassr.svg',
+    'alnasrfc': '/images/teams/nassr.svg',
+    'alnasr': '/images/teams/nassr.svg',
+    'النصر': '/images/teams/nassr.svg',
+    
+    'alhilal': '/images/teams/hilal.svg',
+    'alhilalfc': '/images/teams/hilal.svg',
+    'الهلال': '/images/teams/hilal.svg',
+    
+    'alahli': '/images/teams/ahli.svg',
+    'alahlifc': '/images/teams/ahli.svg',
+    'الأهلي': '/images/teams/ahli.svg',
+    
+    'alittihad': '/images/teams/ittihad.svg',
+    'alittihadfc': '/images/teams/ittihad.svg',
+    'الاتحاد': '/images/teams/ittihad.svg',
+    
+    'alshabab': '/images/teams/shabab.svg',
+    'alshabfc': '/images/teams/shabab.svg',
+    'الشباب': '/images/teams/shabab.svg',
+    
+    'alfateh': '/images/teams/fateh.svg',
+    'alfatehfc': '/images/teams/fateh.svg',
+    'الفتح': '/images/teams/fateh.svg',
+  };
+  
+  return teamLogoMap[teamNameLower] || '/images/teams/default.svg';
+}
+
+### 7. client/src/hooks/use-websocket.tsx
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+type WebSocketStatus = 'connecting' | 'open' | 'closed' | 'error';
+
+interface WebSocketMessage {
+  type: string;
+  [key: string]: any;
+}
+
+interface UseWebSocketOptions {
+  reconnectOnClose?: boolean;
+  reconnectInterval?: number;
+  maxReconnectAttempts?: number;
+}
+
+const defaultOptions: UseWebSocketOptions = {
+  reconnectOnClose: true,
+  reconnectInterval: 5000,
+  maxReconnectAttempts: 5
+};
+
+export function useWebSocket(options: UseWebSocketOptions = {}) {
+  const opts = { ...defaultOptions, ...options };
+  
+  const [status, setStatus] = useState<WebSocketStatus>('closed');
+  const [messages, setMessages] = useState<WebSocketMessage[]>([]);
+  const [liveMatches, setLiveMatches] = useState<any[]>([]);
+  const socketRef = useRef<WebSocket | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const connect = useCallback(() => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) return;
+    
+    try {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
+      setStatus('connecting');
+      
+      socket.onopen = () => {
+        setStatus('open');
+        reconnectAttemptsRef.current = 0;
+      };
+      
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setMessages(prev => [...prev, data]);
+          
+
+          handleMessageByType(data);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+      
+      socket.onclose = () => {
+        setStatus('closed');
+        if (opts.reconnectOnClose && reconnectAttemptsRef.current < (opts.maxReconnectAttempts || 5)) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectAttemptsRef.current += 1;
+            connect();
+          }, opts.reconnectInterval);
+        }
+      };
+      
+      socket.
+      onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setStatus('error');
+      };
+    } catch (error) {
+      console.error('Error creating WebSocket connection:', error);
+      setStatus('error');
+    }
+  }, [opts.reconnectOnClose, opts.reconnectInterval, opts.maxReconnectAttempts]);
+  
+  const handleMessageByType = useCallback((data: WebSocketMessage) => {
+    switch (data.type) {
+      case 'match_list':
+        if (data.data && data.data.matches) {
+          setLiveMatches(data.data.matches);
+        }
+        break;
+        
+      case 'match_update':
+        setLiveMatches(prev => {
+
+          const updated = [...prev];
+          const matchIndex = updated.findIndex(m => m.matchId === data.matchId);
+          
+          if (matchIndex >= 0) {
+
+            const match = { ...updated[matchIndex] };
+            
+
+            if (data.homeScore !== undefined) match.homeScore = data.homeScore;
+            if (data.awayScore !== undefined) match.awayScore = data.awayScore;
+            if (data.minute !== undefined) match.minute = data.minute;
+            if (data.status !== undefined) match.status = data.status;
+            
+
+            if (data.update) {
+              match.updates = [...(match.updates || []), data.update];
+            }
+            
+            updated[matchIndex] = match;
+          }
+          
+          return updated;
+        });
+        break;
+        
+      case 'connection':
+        console.log('WebSocket connected:', data.message);
+        break;
+        
+      case 'pong':
+        break;
+        
+      default:
+        console.log('Unhandled WebSocket message type:', data.type);
+    }
+  }, []);
+  
+  const disconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
+    if (socketRef.current) {
+      socketRef.current.close();
+      socketRef.current = null;
+    }
+    
+    setStatus('closed');
+  }, []);
+  
+  const sendMessage = useCallback((message: any) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(message));
+      return true;
+    }
+    return false;
+  }, []);
+  
+  const ping = useCallback(() => {
+    return sendMessage({ type: 'ping', timestamp: Date.now() });
+  }, [sendMessage]);
+  
+  const subscribeToMatch = useCallback((matchId: number) => {
+    return sendMessage({ type: 'subscribe_match', matchId });
+  }, [sendMessage]);
+  
+  useEffect(() => {
+    connect();
+    
+    return () => {
+      disconnect();
+    };
+  }, [connect, disconnect]);
+  
+  return {
+    status,
+    messages,
+    liveMatches,
+    connect,
+    disconnect,
+    sendMessage,
+    ping,
+    subscribeToMatch,
+    isConnecting: status === 'connecting',
+    isConnected: status === 'open',
+    isDisconnected: status === 'closed' || status === 'error',
+  };
+}
+
+### 8. client/src/hooks/use-auth.tsx
+import { createContext, ReactNode, useContext } from "react";
+import {
+  useQuery,
+  useMutation,
+  UseMutationResult,
+} from "@tanstack/react-query";
+import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
+import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+type AuthContextType = {
+  user: SelectUser | null;
+  isLoading: boolean;
+  error: Error | null;
+  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  logoutMutation: UseMutationResult<void, Error, void>;
+  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+};
+
+type LoginData = Pick<InsertUser, "username" | "password">;
+
+export const AuthContext = createContext<AuthContextType | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const { toast } = useToast();
+  const {
+    data: user,
+    
+     error,
+    isLoading,
+  } = useQuery<SelectUser | undefined, Error>({
+    queryKey: ["/api/user"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: LoginData) => {
+      const res = await apiRequest("POST", "/api/login", credentials);
+      return await res.json();
+    },
+    onSuccess: (user: SelectUser) => {
+      queryClient.setQueryData(["/api/user"], user);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "فشل تسجيل الدخول",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (credentials: InsertUser) => {
+      const res = await apiRequest("POST", "/api/register", credentials);
+      return await res.json();
+    },
+    onSuccess: (user: SelectUser) => {
+      queryClient.setQueryData(["/api/user"], user);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "فشل التسجيل",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/logout");
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/user"], null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "فشل تسجيل الخروج",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user: user ?? null,
+        isLoading,
+        error,
+        loginMutation,
+        logoutMutation,
+        registerMutation,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
+
+### 9. client/src/lib/protected-route.tsx
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
+import { Redirect, Route } from "wouter";
+
+export function ProtectedRoute({
+  path,
+  component: Component,
+}: {
+  path: string;
+  component: () => React.JSX.Element;
+}) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <Route path={path}>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-border" />
+        </div>
+      </Route>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Route path={path}>
+        <Redirect to="/auth" />
+      </Route>
+    );
+  }
+
+  return <Route path={path} component={Component} />;
+}
+
+### 10. client/src/App.tsx
+import { AuthProvider } from "@/hooks/use-auth";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { Toaster } from "@/components/ui/toaster";
+import { Switch, Route } from "wouter";
+import { ProtectedRoute } from "@/lib/protected-route";
+
+
+import HomePage from "@/pages/home-page";
+import AuthPage from "@/pages/auth-page";
+import DashboardPage from "@/pages/dashboard-page";
+import TournamentDetailsPage from "@/pages/tournament-details";
+import LiveMatchesPage from "@/pages/live-matches";
+import NotFound from "@/pages/not-found";
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/auth" component={AuthPage} />
+      <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/dashboard" component={DashboardPage} />
+      <ProtectedRoute path="/tournament/:id" component={TournamentDetailsPage} />
+      <ProtectedRoute path="/live-matches" component={LiveMatchesPage} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+
+
