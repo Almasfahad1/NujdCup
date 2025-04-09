@@ -1,4 +1,4 @@
-```
+
 # eSports Platform - Road to 2034
 
 ## Team Members
