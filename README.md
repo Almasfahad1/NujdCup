@@ -32,4 +32,4 @@ To empower gamers, promote eSports excellence, and contribute to a competitive a
 
 Feel free to contribute, suggest enhancements, or connect with us to grow this platform together!
 
-[Visit Our Platform](https://nujd-cup-looalffahd11.replit.app)
+https://nujd-cup-looalffahd11.replit.app
