@@ -1,0 +1,240 @@
+كود تغيير عنوان الموقع 
+<title>NajdCup - كأس العالم 2034</title>
+<meta name="description" content="NajdCup - منصة إدارة بطولات كرة القدم العالمية" />
+
+كود الربع النهائي فالبطوله 
+<h3 className="text-center mb-4 font-bold text-primary">
+  ربع النهائي
+</h3>
+
+كود النصف النهائي فالبطوله 
+<h3 className="text-center mb-4 font-bold text-primary">
+  نصف النهائي
+</h3>
+
+تغيير شعار التطبيق 
+// قديم
+"appTagline": "كأس السعودية 2034",
+
+// جديد
+"appTagline": "كأس العالم 2034",
+
+تثبيت اتطبيق
+// قديم
+"app_installed_description": "تم تثبيت تطبيق نجد كأس بنجاح على جهازك",
+
+// جديد
+"app_installed_description": "تم تثبيت تطبيق NajdCup بنجاح على جهازك",
+
+
+وصف المنصه ( من نحن ) 
+// قديم
+"description1": "نجد كأس - كأس السعودية 2034 هي منصة رياضية متكاملة تهدف إلى تنظيم وإدارة البطولات الرياضية بمختلف أنواعها. نسعى لتطوير المشهد الرياضي وتسهيل عملية تنظيم البطولات والمسابقات الرياضية.",
+
+// جديد
+"description1": "NajdCup - كأس العالم 2034 هي منصة رياضية متكاملة تهدف إلى تنظيم وإدارة البطولات الرياضية بمختلف أنواعها. نسعى لتطوير المشهد الرياضي وتسهيل عملية تنظيم البطولات والمسابقات الرياضية.",
+
+
+وصف المساعد الذكي
+// قديم
+"description": "المساعد الذكي لكأس السعودية 2034 جاهز للرد على استفساراتك حول البطولة والفرق واللاعبين",
+
+// جديد
+"description": "المساعد الذكي لكأس العالم 2034 جاهز للرد على استفساراتك حول البطولة والفرق واللاعبين",
+
+
+كود المباريات 
+// مباريات ربع النهائي
+{
+  id: 1,
+  round: "quarter",
+  homeTeam: "السعودية",
+  awayTeam: "ألمانيا",
+  date: "15 يونيو 2034"
+},
+{
+  id: 2,
+  round: "quarter",
+  homeTeam: "فرنسا",
+  awayTeam: "اليابان",
+  date: "16 يونيو 2034"
+},
+{
+  id: 3,
+  round: "quarter",
+  homeTeam: "البرازيل",
+  awayTeam: "إنجلترا",
+  date: "17 يونيو 2034"
+},
+{
+  id: 4,
+  round: "quarter",
+  homeTeam: "الأرجنتين",
+  awayTeam: "إسبانيا",
+  date: "18 يونيو 2034"
+},
+
+// مباريات نصف النهائي
+{
+  id: 5,
+  round: "semi",
+  homeTeam: "السعودية",
+  awayTeam: "فرنسا",
+  date: "22 يونيو 2034"
+},
+{
+  id: 6,
+  round: "semi",
+  homeTeam: "البرازيل",
+  awayTeam: "الأرجنتين",
+  date: "23 يونيو 2034"
+}
+
+
+قائمه المنتخبات المشاركة 
+// جدول المنتخبات العالمية المشاركة
+const worldCupTeams: TeamStanding[] = [
+  {
+    id: 1,
+    name: "البرازيل",
+    logo: "/images/teams/brazil.svg",
+    tournamentId: 1,
+    played: 5,
+    won: 5,
+    drawn: 0,
+    lost: 0,
+    goalsFor: 12,
+    goalsAgainst: 2,
+    points: 15
+  },
+  {
+    id: 2,
+    name: "الأرجنتين",
+    logo: "/images/teams/argentina.svg",
+    tournamentId: 1,
+    played: 5,
+    won: 4,
+    drawn: 1,
+    lost: 0,
+    goalsFor: 10,
+    goalsAgainst: 3,
+    points: 13
+  },
+  {
+    id: 3,
+    name: "فرنسا",
+    logo: "/images/teams/france.svg",
+    tournamentId: 1,
+    played: 5,
+    won: 4,
+    drawn: 0,
+    lost: 1,
+    goalsFor: 9,
+    goalsAgainst: 3,
+    points: 12
+  },
+  {
+    id: 4,
+    name: "إسبانيا",
+    logo: "/images/teams/spain.svg",
+    tournamentId: 1,
+    played: 5,
+    won: 3,
+    drawn: 2,
+    lost: 0,
+    goalsFor: 8,
+    goalsAgainst: 2,
+    points: 11
+  },
+  {
+    id: 5,
+    name: "ألمانيا",
+    logo: "/images/teams/germany.svg",
+    tournamentId: 1,
+    played: 5,
+    won: 3,
+    drawn: 1,
+    lost: 1,
+    goalsFor: 10,
+    goalsAgainst: 5,
+    points: 10
+  },
+  {
+    id: 6,
+    name: "إنجلترا",
+    logo: "/images/teams/england.svg",
+    tournamentId: 1,
+    played: 5,
+    won: 3,
+    drawn: 1,
+    lost: 1,
+    goalsFor: 7,
+    goalsAgainst: 3,
+    points: 10
+  },
+  {
+    id: 7,
+    name: "السعودية",
+    logo: "/images/teams/saudi.svg",
+    tournamentId: 1,
+    played: 5,
+    won: 3,
+    drawn: 0,
+    lost: 2,
+    goalsFor: 6,
+    goalsAgainst: 4,
+    points: 9
+  },
+  {
+    id: 8,
+    name: "اليابان",
+    logo: "/images/teams/japan.svg",
+    tournamentId: 1,
+    played: 5,
+    won: 2,
+    drawn: 2,
+    lost: 1,
+    goalsFor: 5,
+    goalsAgainst: 4,
+    points: 8
+  }
+];
+
+
+تحقق المسارات المحميه ( مع اضافه صفحات المساعد الذكي )
+// المسارات العامة التي لا تتطلب تسجيل دخول
+const publicPaths = [
+  "/fan-services", 
+  "/companion-guidance", 
+  "/predictions", 
+  "/lucky-box", 
+  "/golden-moment", 
+  "/fan-points",
+  "/tickets",
+  "/smart-assistant",
+  "/chat",
+  "/ai-assistant"
+];
+
+// بيانات المستخدم الوهمية للمسارات العامة
+const user = {
+  id: 0,
+  username: "زائر",
+  fullName: "زائر",
+  email: "",
+  password: "",
+  language: "ar",
+  createdAt: new Date()
+};
+
+
+
+اضافه ملاحظه توضيحيه تحت جدول البطوله
+{/* ملاحظة توضيحية */}
+<Alert className="bg-blue-50 text-blue-800 border border-blue-200 mt-8">
+  <InfoIcon className="h-4 w-4" />
+  <AlertDescription className={`text-sm ${isArabic ? "text-right mr-2" : "text-left ml-2"}`}>
+    تنويه: هذا الجدول مبدئي فقط وسيتم تحديثه لاحقاً بالنتائج الرسمية.
+  </AlertDescription>
+</Alert>
+
