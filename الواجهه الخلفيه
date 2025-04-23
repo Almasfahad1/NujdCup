@@ -1,0 +1,735 @@
+// server/index.js - الملف الرئيسي لتشغيل الخادم
+
+const express = require('express');
+const session = require('express-session');
+const cors = require('cors');
+const { WebSocketServer } = require('ws');
+const http = require('http');
+const axios = require('axios');
+const { setupAuth } = require('./auth');
+const path = require('path');
+
+// إنشاء تطبيق Express
+const app = express();
+const port = process.env.PORT || 5000;
+
+// إعداد Middleware
+app.use(express.json());
+app.use(cors());
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// إعداد جلسات المستخدم
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'najdcup-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+
+// إعداد المصادقة
+setupAuth(app);
+
+// إنشاء خادم HTTP
+const server = http.createServer(app);
+
+// إنشاء خادم WebSocket
+const wss = new WebSocketServer({ server, path: '/ws' });
+
+// معالجة اتصالات WebSocket
+wss.on('connection', (ws) => {
+  console.log('WebSocket client connected');
+  
+  // إرسال تحديثات المباريات المباشرة كل 30 ثانية
+  const interval = setInterval(() => {
+    if (ws.readyState === ws.OPEN) {
+      sendLiveMatchUpdates(ws);
+    }
+  }, 30000);
+  
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+      console.log('Received message:', data);
+      
+      // معالجة الرسائل المستلمة
+      if (data.type === 'ping') {
+        ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+      }
+    } catch (error) {
+      console.error('Error processing message:', error);
+    }
+  });
+  
+  ws.on('close', () => {
+    console.log('WebSocket client disconnected');
+    clearInterval(interval);
+  });
+});
+
+// دالة لإرسال تحديثات المباريات المباشرة
+async function sendLiveMatchUpdates(ws) {
+  try {
+    // جلب البيانات من API الداخلي
+    const response = await axios.get('http://localhost:5000/api/matches/live');
+    const liveMatches = response.data;
+    
+    // إرسال التحديثات للعميل
+    ws.send(JSON.stringify({
+      type: 'liveMatches',
+      data: liveMatches,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.error('Error sending live match updates:', error);
+  }
+}
+
+// واجهة برمجة التطبيق للبطولات
+app.get('/api/tournaments', async (req, res) => {
+  try {
+    // جلب بيانات البطولات من قاعدة البيانات أو API
+    const tournaments = [
+      { 
+        id: 1, 
+        name: "كأس العالم 2034", 
+        sport: "football", 
+        startDate: "2034-06-01", 
+        endDate: "2034-07-15", 
+        status: "upcoming", 
+        location: "المملكة العربية السعودية"
+      }
+    ];
+    
+    res.json(tournaments);
+  } catch (error) {
+    console.error('Error fetching tournaments:', error);
+    res.status(500).json({ error: 'Failed to fetch tournaments' });
+  }
+});
+
+// واجهة برمجة التطبيق للمنتخبات المشاركة
+app.get('/api/teams', async (req, res) => {
+  try {
+    // جلب بيانات المنتخبات من قاعدة البيانات
+    const teams = [
+      { id: 1, name: "البرازيل", logo: "/images/teams/brazil.svg" },
+      { id: 2, name: "الأرجنتين", logo: "/images/teams/argentina.svg" },
+      { id: 3, name: "فرنسا", logo: "/images/teams/france.svg" },
+      { id: 4, name: "إسبانيا", logo: "/images/teams/spain.svg" },
+      { id: 5, name: "ألمانيا", logo: "/images/teams/germany.svg" },
+      { id: 6, name: "إنجلترا", logo: "/images/teams/england.svg" },
+      { id: 7, name: "السعودية", logo: "/images/teams/saudi.svg" },
+      { id: 8, name: "اليابان", logo: "/images/teams/japan.svg" }
+    ];
+    
+    res.json(teams);
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    res.status(500).json({ error: 'Failed to fetch teams' });
+  }
+});
+
+// واجهة برمجة التطبيق لبراكيت البطولة
+app.get('/api/tournament/bracket', async (req, res) => {
+  try {
+    // جلب بيانات براكيت البطولة
+    const bracket = [
+      {
+        id: 1,
+        round: "quarter",
+        homeTeam: "السعودية",
+        awayTeam: "ألمانيا",
+        date: "15 يونيو 2034"
+      },
+      {
+        id: 2,
+        round: "quarter",
+        homeTeam: "فرنسا",
+awayTeam: "اليابان",
+        date: "16 يونيو 2034"
+      },
+      {
+        id: 3,
+        round: "quarter",
+        homeTeam: "البرازيل",
+        awayTeam: "إنجلترا",
+        date: "17 يونيو 2034"
+      },
+      {
+        id: 4,
+        round: "quarter",
+        homeTeam: "الأرجنتين",
+        awayTeam: "إسبانيا",
+        date: "18 يونيو 2034"
+      },
+      {
+        id: 5,
+        round: "semi",
+        homeTeam: "السعودية",
+        awayTeam: "فرنسا",
+        date: "22 يونيو 2034"
+      },
+      {
+        id: 6,
+        round: "semi",
+        homeTeam: "البرازيل",
+        awayTeam: "الأرجنتين",
+        date: "23 يونيو 2034"
+      }
+    ];
+    
+    res.json(bracket);
+  } catch (error) {
+    console.error('Error fetching tournament bracket:', error);
+    res.status(500).json({ error: 'Failed to fetch tournament bracket' });
+  }
+});
+
+// واجهة برمجة التطبيق للمباريات القادمة
+app.get('/api/matches/upcoming', async (req, res) => {
+  try {
+    // جلب بيانات المباريات القادمة
+    const upcomingMatches = [
+      {
+        id: 101,
+        homeTeam: "السعودية",
+        awayTeam: "ألمانيا",
+        date: "15 يونيو 2034",
+        time: "18:00",
+        venue: "استاد البيت، الدوحة",
+        league: "كأس العالم 2034"
+      },
+      {
+        id: 102,
+        homeTeam: "فرنسا",
+        awayTeam: "اليابان",
+        date: "16 يونيو 2034",
+        time: "21:00",
+        venue: "استاد 974، الدوحة",
+        league: "كأس العالم 2034"
+      },
+      {
+        id: 103,
+        homeTeam: "البرازيل",
+        awayTeam: "إنجلترا",
+        date: "17 يونيو 2034",
+        time: "18:00",
+        venue: "استاد الجنوب، الوكرة",
+        league: "كأس العالم 2034"
+      }
+    ];
+    
+    res.json(upcomingMatches);
+  } catch (error) {
+    console.error('Error fetching upcoming matches:', error);
+    res.status(500).json({ error: 'Failed to fetch upcoming matches' });
+  }
+});
+
+// واجهة برمجة التطبيق للمباريات المباشرة
+app.get('/api/matches/live', async (req, res) => {
+  try {
+    // جلب بيانات المباريات المباشرة (قد تكون فارغة حاليًا)
+    const liveMatches = [];
+    
+    res.json(liveMatches);
+  } catch (error) {
+    console.error('Error fetching live matches:', error);
+    res.status(500).json({ error: 'Failed to fetch live matches' });
+  }
+});
+
+// واجهة برمجة التطبيق لقائمة المتصدرين
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    // جلب بيانات قائمة المتصدرين لمسابقة التوقعات
+    // تحويل الطلب إلى معالج Python لحساب البيانات الإحصائية
+    const response = await axios.get('http://localhost:5001/calculate-leaderboard');
+    const leaderboard = response.data;
+    
+    res.json(leaderboard);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.json([]); // إرجاع مصفوفة فارغة في حالة الخطأ
+  }
+});
+
+// واجهة برمجة التطبيق لإرسال التوقعات
+app.post('/api/predictions/submit', (req, res) => {
+  // الحصول على بيانات التوقع من الطلب
+  const { matchId, homeScore, awayScore } = req.body;
+  
+  // التحقق من المستخدم الحالي
+  const userId = req.user?.id || 0; // استخدام معرف المستخدم الضيف إذا لم يكن مسجل دخول
+  
+  if (!matchId  homeScore === undefined  awayScore === undefined) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  
+  try {
+    // إرسال التوقع إلى معالج PHP للتخزين في قاعدة البيانات
+    axios.post('http://localhost:5002/api/save-prediction.php', {
+      userId,
+      matchId,
+      homeScore,
+      awayScore
+    });
+    
+    res.status(201).json({ success: true, message: 'Prediction saved successfully' });
+  } catch (error) {
+    console.error('Error saving prediction:', error);
+    res.status(500).json({ error: 'Failed to save prediction' });
+  }
+});
+
+// واجهة برمجة التطبيق للمساعد الذكي
+app.post('/api/smart-assistant/ask', async (req, res) => {
+  try {
+    const { question } = req.body;
+    
+    if (!question) {
+      return res.status(400).json({ error: 'Question is required' });
+    }
+    
+    // إرسال السؤال إلى خدمة Java AI
+    const response = await axios.post('http://localhost:5003/api/ai/process', { question });
+    const answer = response.data;
+    
+    res.
+
+#!/usr/bin/env python3
+# prediction_analytics.py - خدمة تحليل التوقعات والإحصائيات
+
+from flask import Flask, request, jsonify
+import pandas as pd
+import numpy as np
+from sklearn.metrics import mean_squared_error
+import logging
+import requests
+import json
+
+app = Flask(__name__)
+
+# إعداد التسجيل
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# الاتصال بخدمة Node.js
+NODE_API_URL = 'http://localhost:5000/api'
+
+@app.route('/calculate-leaderboard', methods=['GET'])
+def calculate_leaderboard():
+    """حساب قائمة المتصدرين باستخدام خوارزميات التعلم الآلي"""
+    try:
+        # جلب بيانات التوقعات من خدمة Node.js
+        predictions_response = requests.get(f"{NODE_API_URL}/predictions")
+        predictions_data = predictions_response.json()
+        
+        # جلب بيانات المباريات الحقيقية
+        matches_response = requests.get(f"{NODE_API_URL}/matches/completed")
+        matches_data = matches_response.json()
+        
+        # تحويل البيانات إلى إطارات بيانات pandas
+        predictions_df = pd.DataFrame(predictions_data)
+        matches_df = pd.DataFrame(matches_data)
+        
+        # حساب دقة التوقعات
+        if not predictions_df.empty and not matches_df.empty:
+            # إنشاء قاموس للمباريات المكتملة للبحث السريع
+            matches_dict = {match['id']: match for match in matches_data}
+            
+            # حساب النقاط لكل توقع
+            user_points = {}
+            
+            for _, prediction in predictions_df.iterrows():
+                user_id = prediction['userId']
+                match_id = prediction['matchId']
+                
+                # التحقق مما إذا كانت المباراة مكتملة
+                if match_id in matches_dict:
+                    match = matches_dict[match_id]
+                    
+                    # حساب النقاط
+                    points = calculate_points(
+                        prediction['homeScore'],
+                        prediction['awayScore'],
+                        match['homeScore'],
+                        match['awayScore']
+                    )
+                    
+                    # إضافة النقاط للمستخدم
+                    if user_id not in user_points:
+                        user_points[user_id] = {'points': 0, 'correct': 0, 'total': 0}
+                    
+                    user_points[user_id]['points'] += points
+                    user_points[user_id]['total'] += 1
+                    
+                    if points > 0:
+                        user_points[user_id]['correct'] += 1
+            
+            # تحويل بيانات النقاط إلى قائمة للواجهة
+            leaderboard = []
+            
+            # جلب بيانات المستخدمين
+            users_response = requests.get(f"{NODE_API_URL}/users")
+            users_data = users_response.json()
+            users_dict = {user['id']: user for user in users_data}
+            
+            for user_id, stats in user_points.items():
+                user_info = users_dict.get(user_id, {'username': f'مستخدم {user_id}', 'fullName': ''})
+                
+                leaderboard.append({
+                    'userId': user_id,
+                    'username': user_info['username'],
+                    'fullName': user_info.get('fullName', ''),
+                    'points': stats['points'],
+                    'correctPredictions': stats['correct'],
+                    'totalPredictions': stats['total'],
+                    'accuracy': round((stats['correct'] / stats['total']) * 100, 2) if stats['total'] > 0 else 0
+                })
+            
+            # ترتيب القائمة حسب النقاط
+            leaderboard.sort(key=lambda x: x['points'], reverse=True)
+            
+            # إضافة الترتيب
+            for i, entry in enumerate(leaderboard):
+                entry['rank'] = i + 1
+            
+            return jsonify(leaderboard)
+        
+        return jsonify([])
+    
+    except Exception as e:
+        logger.error(f"Error calculating leaderboard: {str(e)}")
+        return jsonify([])
+
+def calculate_points(pred_home, pred_away, actual_home, actual_away):
+"""حساب النقاط بناءً على دقة التوقع"""
+    # نتيجة مطابقة تماماً
+    if pred_home == actual_home and pred_away == actual_away:
+        return 3
+    
+    # توقع الفائز بشكل صحيح
+    pred_result = get_result(pred_home, pred_away)
+    actual_result = get_result(actual_home, actual_away)
+    
+    if pred_result == actual_result:
+        return 1
+    
+    return 0
+
+def get_result(home, away):
+    """تحديد نتيجة المباراة (فوز المنزل، تعادل، فوز الضيف)"""
+    if home > away:
+        return 'H'
+    elif home < away:
+        return 'A'
+    else:
+        return 'D'
+
+@app.route('/predict-match-outcome', methods=['POST'])
+def predict_match_outcome():
+    """استخدام نموذج التعلم الآلي للتنبؤ بنتائج المباريات"""
+    try:
+        data = request.json
+        home_team = data.get('homeTeam')
+        away_team = data.get('awayTeam')
+        
+        # جلب بيانات تاريخية للمباريات السابقة بين الفريقين
+        # هنا يمكن استخدام نموذج التعلم الآلي للتنبؤ بالنتيجة
+        
+        # نموذج تبسيطي للتوضيح
+        home_win_prob = np.random.uniform(0.3, 0.7)
+        draw_prob = np.random.uniform(0.1, 0.3)
+        away_win_prob = 1 - home_win_prob - draw_prob
+        
+        most_likely_score = predict_most_likely_score(home_team, away_team)
+        
+        return jsonify({
+            'homeTeam': home_team,
+            'awayTeam': away_team,
+            'predictions': {
+                'homeWinProbability': round(home_win_prob, 2),
+                'drawProbability': round(draw_prob, 2),
+                'awayWinProbability': round(away_win_prob, 2),
+                'mostLikelyScore': most_likely_score
+            }
+        })
+    
+    except Exception as e:
+        logger.error(f"Error predicting match outcome: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+def predict_most_likely_score(home_team, away_team):
+    """التنبؤ بالنتيجة الأكثر احتمالاً بين فريقين"""
+    # هذه دالة تبسيطية للتوضيح
+    # في التطبيق الحقيقي، سيتم استخدام نموذج تعلم آلي مدرب على بيانات تاريخية
+    
+    common_scores = [
+        {'home': 1, 'away': 0},
+        {'home': 2, 'away': 1},
+        {'home': 1, 'away': 1},
+        {'home': 0, 'away': 0},
+        {'home': 3, 'away': 1},
+        {'home': 2, 'away': 0},
+        {'home': 0, 'away': 1},
+        {'home': 1, 'away': 2},
+        {'home': 2, 'away': 2}
+    ]
+    
+    # اختيار نتيجة عشوائية من النتائج الشائعة
+    # في التطبيق الحقيقي، سيتم استخدام نموذج للتنبؤ
+    return np.random.choice(common_scores)
+
+if name == '__main__':
+    app.run(host='0.0.0.0', port=5001)
+
+package com.najdcup.ai;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import com.anthropic.sdk.AnthropicClient;
+import com.anthropic.sdk.messages.Message;
+import com.anthropic.sdk.messages.MessagesRequest;
+import com.anthropic.sdk.responses.MessageResponse;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+@SpringBootApplication
+public class SmartAssistantApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SmartAssistantApplication.class, args);
+    }
+}
+
+@RestController
+@RequestMapping("/api/ai")
+class SmartAssistantController {
+    
+    private final AnthropicClient anthropicClient;
+    private final String systemPrompt;
+    private final Map<String, LocalDateTime> rateLimits = new HashMap<>();
+    
+    public SmartAssistantController() {
+        // إعداد وكيل Anthropic Claude API
+        String apiKey = System.getenv("ANTHROPIC_API_KEY");
+        if (apiKey == null || apiKey.isEmpty()) {
+            System.err.println("ANTHROPIC_API_KEY environment variable is not set!");
+            apiKey = "dummy-key"; // مفتاح مؤقت للاختبار فقط
+        }
+        
+        this.anthropicClient = AnthropicClient.builder()
+                .apiKey(apiKey)
+                .build();
+        
+        // إعداد سياق النظام للمساعد الذكي
+        this.systemPrompt = 
+            "أنت المساعد الذكي لكأس العالم 2034 المقام في المملكة العربية السعودية. " +
+            "مهمتك هي تقديم معلومات دقيقة حول البطولة، المباريات، المنتخبات المشاركة، واللاعبين. " +
+            "يجب أن تكون إجاباتك موجزة ودقيقة وبلغة بسيطة يفهمها المشجعون. " +
+            "معلومات عن البطولة: " +
+            "- كأس العالم 2034 سيقام في المملكة العربية السعودية " +
+            "- سيشارك في البطولة 32 منتخباً من مختلف دول العالم " +
+            "- من أبرز المنتخبات المشاركة: السعودية، البرازيل، الأرجنتين، ألمانيا، فرنسا، إسبانيا، إنجلترا واليابان " +
+            "- المباريات التمهيدية وربع النهائي تبدأ في 15 يونيو 2034 " +
+            "- نصف النهائي يقام في 22 و23 يونيو 2034 " +
+            "- النهائي سيقام في 30 يونيو 2034";
+    }
+    
+    @PostMapping("/process")
+    public Map<String, Object> processQuestion(@RequestBody Map<String, String> request) {
+        String question = request.get("question");
+        String userId = request.getOrDefault("userId", "guest");
+        String language = request.getOrDefault("language", "ar");
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        // التحقق من تقييد معدل الاستخدام
+        if (isRateLimited(userId)) {
+            response.put("error", "Rate limit exceeded. Please try again later.");
+            response.put("answer", "عذراً، لقد تجاوزت الحد المسموح من الأسئلة. يرجى المحاولة مرة أخرى بعد قليل.");
+            return response;
+        }
+        
+        // إذا كان السؤال فارغاً أو قصيراً جداً
+        if (question == null || question.trim().length() < 3) {
+            response.put("error", "Question is too short");
+            response.put("answer", "يرجى طرح سؤال أكثر تفصيلاً");
+            return response;
+        }
+        
+        try {
+            // البحث أولاً في قاعدة المعرفة المحلية
+            String knowledgeBaseAnswer = searchKnowledgeBase(question);
+            
+            if (knowledgeBaseAnswer != null) {
+                response.put("answer", knowledgeBaseAnswer);
+                response.put("source", "knowledge_base");
+                return response;
+            }
+            
+            // استخدام Anthropic Claude AI
+            String aiAnswer = callAnthropicAI(question, language);
+            response.put("answer", aiAnswer);
+            response.put("source", "ai");
+            
+            // تحديث قاعدة المعرفة المحلية
+updateKnowledgeBase(question, aiAnswer);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("error", "Failed to process question: " + e.getMessage());
+            response.put("answer", "عذراً، حدث خطأ أثناء معالجة سؤالك. يرجى المحاولة مرة أخرى لاحقاً.");
+        }
+        
+        return response;
+    }
+    
+    private boolean isRateLimited(String userId) {
+        // تنفيذ آلية تقييد معدل الاستخدام البسيطة
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime lastRequest = rateLimits.get(userId);
+        
+        if (lastRequest != null) {
+            long secondsSinceLastRequest = java.time.Duration.between(lastRequest, now).getSeconds();
+            
+            // السماح بسؤال واحد كل 10 ثواني لكل مستخدم
+            if (secondsSinceLastRequest < 10) {
+                return true;
+            }
+        }
+        
+        // تحديث وقت آخر طلب
+        rateLimits.put(userId, now);
+        return false;
+    }
+    
+    private String searchKnowledgeBase(String question) {
+        // البحث في قاعدة المعرفة المحلية
+        Map<String, String> knowledgeBase = getLocalKnowledgeBase();
+        
+        // تبسيط السؤال للبحث
+        String simplifiedQuestion = question.toLowerCase()
+            .replaceAll("[\\p{Punct}&&[^؟]]", "")
+            .trim();
+        
+        // البحث عن تطابق
+        for (Map.Entry<String, String> entry : knowledgeBase.entrySet()) {
+            if (simplifiedQuestion.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        
+        return null;
+    }
+    
+    private Map<String, String> getLocalKnowledgeBase() {
+        // قاعدة معرفة بسيطة للأسئلة الشائعة
+        Map<String, String> knowledgeBase = new HashMap<>();
+        
+        knowledgeBase.put("متى تبدأ", "تبدأ بطولة كأس العالم 2034 في 15 يونيو 2034 وتستمر حتى 30 يونيو 2034.");
+        knowledgeBase.put("كم عدد الفرق", "يشارك في كأس العالم 2034 32 منتخبًا من مختلف دول العالم.");
+        knowledgeBase.put("أين تقام", "ستقام بطولة كأس العالم 2034 في المملكة العربية السعودية.");
+        knowledgeBase.put("من سيفوز", "لا يمكنني التنبؤ بمن سيفوز بكأس العالم 2034، لكن المنافسة ستكون قوية بين المنتخبات المشاركة مثل البرازيل والأرجنتين وفرنسا وإسبانيا وألمانيا والسعودية.");
+        knowledgeBase.put("ما هي الملاعب", "سيتم استضافة مباريات كأس العالم 2034 في عدة ملاعب بالمملكة العربية السعودية، منها استاد البيت في الدوحة واستاد 974 واستاد الجنوب في الوكرة.");
+        knowledgeBase.put("كيف أشتري تذاكر", "يمكنك شراء تذاكر كأس العالم 2034 من خلال الموقع الرسمي للبطولة أو من خلال منافذ البيع المعتمدة. سيتم الإعلان عن تفاصيل بيع التذاكر قريباً.");
+        
+        return knowledgeBase;
+    }
+    
+    private void updateKnowledgeBase(String question, String answer) {
+        // تحديث قاعدة المعرفة المحلية (للتوضيح فقط)
+        // في التطبيق الحقيقي، سيتم حفظ هذه المعلومات في قاعدة بيانات
+        System.out.println("Updated knowledge base with: " + question);
+    }
+    
+    private String callAnthropicAI(String question, String language) {
+        try {
+            // التحقق من توفر مفتاح API
+            if (anthropicClient == null) {
+                return "عذراً، خدمة الذكاء الاصطناعي غير متوفرة حالياً.";
+            }
+            
+            // إنشاء طلب إلى Anthropic Claude
+            MessagesRequest request = MessagesRequest.builder()
+                    .model("claude-3-7-sonnet-20250219")
+                    .maxTokens(1024)
+                    .system(systemPrompt)
+                    .messages(List.of(
+                        new Message("user", question)
+                    ))
+                    .build();
+            
+            // إرسال الطلب
+            MessageResponse response = anthropicClient.messages(request);
+            String answer = response.getContent().get(0).getText();
+            
+            return answer;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            
+            // استخدام إجابة احتياطية في حالة الفشل
+
+return "عذراً، لم أتمكن من الإجابة على سؤالك حالياً. يرجى طرح سؤال آخر أو المحاولة لاحقاً.";
+        }
+    }
+    
+    // واجهة برمجة التطبيق للحصول على معلومات لاعب
+    @GetMapping("/player/{name}")
+    public Map<String, Object> getPlayerInfo(@PathVariable String name) {
+        Map<String, Object> playerInfo = new HashMap<>();
+        
+        // في التطبيق الحقيقي، سيتم جلب هذه المعلومات من قاعدة بيانات
+        playerInfo.put("name", name);
+        playerInfo.put("position", "مهاجم");
+        playerInfo.put("team", "السعودية");
+        playerInfo.put("age", 25);
+        playerInfo.put("appearances", 10);
+        playerInfo.put("goals", 5);
+        
+        return playerInfo;
+    }
+    
+    // واجهة برمجة التطبيق للحصول على إحصائيات الفريق
+    @GetMapping("/team/{name}")
+    public Map<String, Object> getTeamStats(@PathVariable String name) {
+        Map<String, Object> teamStats = new HashMap<>();
+        
+        // في التطبيق الحقيقي، سيتم جلب هذه المعلومات من قاعدة بيانات
+        teamStats.put("name", name);
+        teamStats.put("matchesPlayed", 5);
+        teamStats.put("wins", 3);
+        teamStats.put("draws", 1);
+        teamStats.put("losses", 1);
+        teamStats.put("goalsScored", 10);
+        teamStats.put("goalsConceded", 5);
+        
+        return teamStats;
+    }
+}
+[العميل] ⟷ [Node.js Server (5000)] - واجهة برمجة التطبيق الرئيسية وبوابة API
+    ↓         ↑    ↑    ↑
+    |         |    |    |
+    ↓         |    |    |
+[Python Service (5001)] - تحليلات البيانات والإحصائيات
+    ↓         ↑    |    |
+    |         |    |    |
+    ↓         |    |    |
+[PHP Service (5002)] - إدارة التوقعات وحفظها
+    ↓         ↑    |    |
+    |         |    |    |
+    ↓         |    |    |
+[Java Service (5003)] - المساعد الذكي ومعالجة الذكاء الاصطناعي
